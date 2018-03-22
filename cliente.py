@@ -20,10 +20,6 @@ def main():
         print 'Falha ao criar socket'
         sys.exit()
 
-    # Setando timeout
-    timeval = struct.pack('ll', 15, 0)
-    tcp.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
-
     HOST = sys.argv[1]          # Host: primeiro argumento
     PORT = int(sys.argv[2])     # Port: segundo argumento
     dest = (HOST, PORT)
@@ -33,7 +29,7 @@ def main():
 
     msg = sys.argv[3]           # Mensagem a ser enviada
     cipher = int(sys.argv[4])   # Valor do cipher
-    size = len(msg)*8           #Tamanho da mensagem em bits
+    size = len(msg) * 8
 
     # Convertendo mensagem para ascii
     msg.encode('ascii')
@@ -42,7 +38,8 @@ def main():
     cifrada = ceaser_cipher(msg, cipher)
 
     # Enviando tamanho
-    tcp.send(str(size))
+    p_size = struct.pack('!i', size)
+    tcp.send(p_size)
     tcp.recv(32)
     
     # Enviando mensagem cifrada
@@ -50,10 +47,12 @@ def main():
     tcp.recv(size)
   
     # Enviando cipher
-    tcp.send(str(cipher))
+    p_cipher = struct.pack('!i', cipher)
+    tcp.send(p_cipher)
     tcp.recv(32)
   
     decifrada = tcp.recv(size)
+    decifrada.decode('ascii', 'strict')
     print decifrada
 
     tcp.close()

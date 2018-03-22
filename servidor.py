@@ -16,9 +16,6 @@ class ServidorThread(object):
         
         self.tcp.listen(1)        
         con, cliente = self.tcp.accept()
-        # Timeout
-        timeval = struct.pack('ll', 15, 0)
-        self.tcp.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
         
         threading.Thread(target=self.listen_client, args = (con,cliente)).start()
        
@@ -36,24 +33,24 @@ class ServidorThread(object):
 
         while True:
 
-            size = con.recv(32)
-            if not size:
-                break
-            con.send('>' + size + '<')
+            p_size = con.recv(32)
+            if not p_size: break
+            con.send(p_size)
+            size = struct.unpack('!i', p_size)
+            print size[0]
 
             # Tamanho da mensagem em bits
-            size = int(size) * 8
-            msg = con.recv(size)
-            if not msg:
-                break
-            con.send('>' + msg + '<')
+            msg = con.recv((size[8])*8)
+            if not msg: break
+            con.send(msg)
 
-            cipher = con.recv(32)
-            if not cipher:
-                break
-            con.send(cipher)
+            p_cipher = con.recv(32)
+            if not p_cipher: break
+            con.send(p_cipher)
+            cipher = struct.unpack('!i', p_cipher)
+            print cipher[0]
 
-            decifrada = ceaser_desipher(msg, int(cipher))
+            decifrada = ceaser_desipher(msg, cipher[8])
             print decifrada
             con.send(decifrada)
 
